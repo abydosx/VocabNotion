@@ -1,0 +1,122 @@
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transition: transform 0.5s ease-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  box-sizing: border-box;
+	border-radius: 0.8rem;
+	overflow: hidden;
+	// border: 0.5rem solid;
+  font-size: 20px;
+}
+
+.card-front {
+  background-color: #4f42d8;
+}
+
+.card-back {
+  background-color: #00A800;
+  transform: rotateY(-180deg);
+}
+
+.card-flipped .card-front {
+  transform: rotateY(180deg);
+}
+
+.card-flipped .card-back {
+  transform: rotateY(0deg);
+}
+
+.back-mode {
+  .card-front {
+    background-color: #4f42d8;
+    transform: rotateY(-180deg);
+  }
+
+  .card-back {
+    background-color: #00A800;
+    transform: rotateY(0deg);
+  }
+
+  &.card-flipped .card-front {
+    transform: rotateY(0deg);
+  }
+
+  &.card-flipped .card-back {
+    transform: rotateY(180deg);
+  }
+}
+
+.fade-content {
+  overflow: hidden;
+  box-sizing: border-box;
+
+  .right-fade-enter {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  .right-fade-enter-active {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+
+  .right-fade-exit {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+
+  .right-fade-exit-active {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .right-fade-enter-active,
+  .right-fade-exit-active {
+    transition: opacity 500ms, transform 500ms;
+  }
+
+  .left-fade-enter {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .left-fade-enter-active {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+
+  .left-fade-exit {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+
+  .left-fade-exit-active {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  .left-fade-enter-active,
+  .left-fade-exit-active {
+    transition: opacity 500ms, transform 500ms;
+  }
+
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box !important;
+  }
+}

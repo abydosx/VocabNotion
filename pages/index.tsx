@@ -1,6 +1,6 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect } from 'react'
 import { forwardRef, type HTMLAttributes } from 'react';
-import { notionPages, updatePage } from '_api/notion'
+import { notionPages } from '_api/notion'
 import NotionText from '@/components/NotionRichText'
 import LearnWordCard from '@/components/LearnWordCard'
 import Button from '@mui/material/Button'
@@ -9,10 +9,14 @@ import { useVocabulary } from '@/hooks/vocabulary'
 import LinearProgress, {
   linearProgressClasses
 } from "@mui/material/LinearProgress";
+import Modal from '@mui/material/Modal';
 import { styled } from "@mui/material/styles";
 
-type Results = QueryDatabaseResponse['results']
+type NotionResults = QueryDatabaseResponse['results']
 
+function isNotionWordInfo(pet: NotionResults[0]): pet is NotionWordInfo {
+  return (pet as NotionWordInfo).object === 'page';
+}
 const BoxButton = (props: any) => {
   return (
     <Button
@@ -23,20 +27,6 @@ const BoxButton = (props: any) => {
     </Button>
   )
 }
-
-const Card = memo<CardProps>(
-  function Card({ info, isFontCard, moreAction }) {
-    return (
-      <LearnWordCard
-        className="swiper-slide"
-        isFontCard={isFontCard}
-        info={info}
-        moreAction={moreAction}
-      />
-    )
-  },
-  (pre, now) => pre.isFontCard === now.isFontCard
-)
 
 const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
   height: 10,
@@ -77,9 +67,8 @@ export async function getServerSideProps() {
 
 const Learn = forwardRef<
   HTMLAttributes<HTMLDivElement>,
-  { results: Results }
+  { results: NotionResults }
 >(({ results }) => {
-  const [showModal, setShowModal] = useState(false)
   const [isFontCard, setCardMode] = useState(true)
   const {
     progress,
@@ -89,9 +78,17 @@ const Learn = forwardRef<
     handleRemoveVocabulary,
   } = useVocabulary(results)
 
+  const [open, setOpen] = useState(false)
+  const [currentItem, setCurrentItem] = useState<FormatContent>()
+  const handleOpen = (item: FormatContent) => {
+    setCurrentItem(item)
+    setOpen(true)
+  };
+  const handleClose = () => setOpen(false);
+
   useEffect(() => {
     document.addEventListener('click', () => {
-      setShowModal(false)
+      setOpen(false)
     })
   }, [])
 
@@ -101,46 +98,53 @@ const Learn = forwardRef<
 
   return (
     <div className="w-full h-screen">
-      <div className="">
-        <BorderLinearProgress variant="determinate" value={progress} />
-        <div className="flex justify-center fade-content items-center flex-col">
-          <div className="swiper !w-full h-fit mt-20">
-            <div className="swiper-wrapper">
-              {allVocabularies.map((item: any, index: number) => {
-                const { zh, en } = formatContent(item)
+      <BorderLinearProgress variant="determinate" value={progress} />
+      <div className="flex justify-center fade-content items-center flex-col">
+        <div className="swiper !w-96 h-fit mt-20">
+          <div className="swiper-wrapper">
+            {allVocabularies.map((item: any) => {
+              if (isNotionWordInfo(item)) {
                 return (
-                  <Card
+                  <LearnWordCard
                     key={item.id}
-                    info={{ font: zh, back: en }}
+                    info={formatContent(item)}
                     isFontCard={isFontCard}
-                    moreAction={() => setShowModal(!showModal)}
+                    handleShowModal={handleOpen}
                   />
                 )
-              })}
-            </div>
+              }
+            })}
           </div>
-          <div className="fixed top-3/4 min-w-full px-6 box-border">
-            <div className="flex justify-around mb-8">
-              <BoxButton onClick={handleRemoveVocabulary} disabled={allVocabularies.length <= 0}>
-                Have Learned
-              </BoxButton>
-              <BoxButton
-                className={isFontCard ? '!bg-[#4f42d8] !text-white' : '!bg-[#00A800] !text-white'}
-                onClick={handleSwitchSide}
-              >
-                {isFontCard ? 'Font' : 'Back'}
-              </BoxButton>
-              <BoxButton onClick={handleAddVocabularies} disabled={allVocabularies.length <= 0}>
-                10 More Words
-              </BoxButton>
-            </div>
+        </div>
+        <div className="fixed top-3/4 min-w-full px-6 box-border">
+          <div className="flex justify-around mb-8">
+            <BoxButton onClick={handleRemoveVocabulary} disabled={allVocabularies.length <= 0}>
+              Have Learned
+            </BoxButton>
+            <BoxButton
+              className={isFontCard ? '!bg-[#4f42d8] !text-white' : '!bg-[#00A800] !text-white'}
+              onClick={handleSwitchSide}
+            >
+              {isFontCard ? 'Font' : 'Back'}
+            </BoxButton>
+            <BoxButton onClick={handleAddVocabularies} disabled={allVocabularies.length <= 0}>
+              10 More Words
+            </BoxButton>
           </div>
-          {/* {showModal && (
+        </div>
+        {/* {showModal && (
           <Modal>
             <NotionText richText={formatContent(allVocabularies[currentIndex]).richTextEn} />
           </Modal>
         )} */}
-        </div>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <NotionText richText={currentItem?.richTextEn} />
+        </Modal>
       </div>
     </div>
   )

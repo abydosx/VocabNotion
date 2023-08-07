@@ -1,17 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import Swiper from 'swiper'
-import { Manipulation, EffectCoverflow } from 'swiper/modules'
 import 'swiper/css/manipulation'
+import 'swiper/css/effect-coverflow'
 import 'swiper/css'
 import { notionPages, updatePage } from '_api/notion'
-import { QueryDatabaseResponse, PartialDatabaseObjectResponse, RichTextDatabasePropertyConfigResponse, TextRichTextItemResponse } from '@/types/notion';
-export function useVocabulary(results: QueryDatabaseResponse['results'] = []) {
+import { QueryDatabaseResponse, RichTextItemResponse } from '@/types/notion';
+type Results = QueryDatabaseResponse['results']
+
+export function useVocabulary(results: Results = []) {
   const PAGE_SIZE = 10 as const
   const [currentIndex, setCurrentIndex] = useState(0)
   const [nextCursor, setNextCursor] = useState<string | null>()
-  const [allVocabularies, setAllVocabularies] = useState(results)
+  const [allVocabularies, setAllVocabularies] = useState<Results>(results)
   const [swiper, setSwiper] = useState<typeof Swiper>()
-  const [cacheWords, setCacheWords] = useState<QueryDatabaseResponse['results']>([])
+  const [cacheWords, setCacheWords] = useState<Results>([])
   const progress = useMemo(() => parseInt((((currentIndex + 1) / allVocabularies.length) * 100).toString()) || 0, [currentIndex, allVocabularies])
 
   const handleRemoveVocabulary = async () => {
@@ -77,42 +79,51 @@ export function useVocabulary(results: QueryDatabaseResponse['results'] = []) {
     getMoreWords()
   }
 
-  const formatContent = (item: PartialDatabaseObjectResponse<RichTextDatabasePropertyConfigResponse>) => {
+  const formatContent = (item: NotionWordInfo): FormatContent => {
     let zh = '',
       en = '',
-      richTextEn = [] as TextRichTextItemResponse[]
-    if (item) {
+      richTextEn = [] as RichTextItemResponse[]
+    if (item.properties.EN.type === 'rich_text' && item.properties.ZH.type === 'rich_text' && item.properties.More.type === 'rich_text') {
       const {
         properties: {
           EN: { rich_text: EN_TEXT },
           ZH: { rich_text: ZH_TEXT },
           More: { rich_text: More },
-        },
+        }
       } = item
-      en = (EN_TEXT as unknown as TextRichTextItemResponse[])[0]?.plain_text
-      zh = (ZH_TEXT as unknown as TextRichTextItemResponse[])[0]?.plain_text
-      richTextEn = More as unknown as TextRichTextItemResponse[]
+      en = EN_TEXT[0]?.plain_text
+      zh = ZH_TEXT[0]?.plain_text
+      richTextEn = More
     }
     return { zh, en, richTextEn }
   }
+  
 
   useEffect(() => {
-    const swiper = new Swiper('.swiper', {
-      speed: 400,
-      spaceBetween: 100,
-      modules: [Manipulation, EffectCoverflow],
-      allowSlidePrev: true,
-      effect: 'overflow',
-      on: {
-        init: function () {
-          console.log('swiper initialized')
+    setTimeout(() => {
+      const swiper = new Swiper('.swiper', {
+        speed: 400,
+        spaceBetween: 100,
+        slidesPerView: 'auto',
+        effect: 'overflow',
+        coverflowEffect: {
+          rotate: 0,
+          stretch: 80,
+          depth: 200,
+          modifier: 1,
         },
-      },
+        centeredSlides: true,
+        on: {
+          init: function () {
+            console.log('swiper initialized')
+          },
+        },
+      })
+      swiper.on('slideChange', function (e: any) {
+        setCurrentIndex(e.activeIndex)
+      })
+      setSwiper(swiper as any)
     })
-    swiper.on('slideChange', function (e: any) {
-      setCurrentIndex(e.activeIndex)
-    })
-    setSwiper(swiper as any)
   }, [allVocabularies])
 
   useEffect(() => {

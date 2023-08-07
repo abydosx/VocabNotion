@@ -1,14 +1,29 @@
 import AudioButton from './AudioButton'
+import { memo } from 'react'
 import type { MouseEvent } from 'react';
 import styles from './styles/LearnWordCard.module.scss'
-const Card = ({ className, isFontCard, moreAction, info: { font, back } }: CardProps & { className: string }) => {
+
+interface CardProps {
+  info: FormatContent
+  className?: string
+  isFontCard: boolean
+  handleShowModal: (info: FormatContent) => void
+}
+
+const Card = ({ className, isFontCard, handleShowModal, info }: CardProps) => {
   const flip = (e: MouseEvent) => {
     const card = (e.target as HTMLElement).closest('.card')
     card?.classList.toggle(styles['card-flipped'])
   }
 
+  const moreAction = () => {
+    handleShowModal(info)
+  }
+
+  const { zh: back, en: font } = info
+
   return (
-    <div className={`${className} text-white xl:h-80 xl:w-80 h-48 w-48 card ${isFontCard ? '' : styles['back-mode']}`}>
+    <div className={`${className} swiper-slide text-white xl:h-80 xl:w-80 !h-48 !w-48 card ${isFontCard ? '' : styles['back-mode']}`}>
       <div className={styles['card-front']} onClick={flip}>
         <p>
           <span>{font}</span>
@@ -32,4 +47,18 @@ const Card = ({ className, isFontCard, moreAction, info: { font, back } }: CardP
     </div>
   )
 }
-export default Card
+
+const LearnWordCard = memo<CardProps>(
+  function LearnWordCard({ className, info, isFontCard, handleShowModal }) {
+    return (
+      <Card
+        className={className}
+        isFontCard={isFontCard}
+        info={info}
+        handleShowModal={handleShowModal}
+      />
+    )
+  },
+  (pre, now) => pre.isFontCard === now.isFontCard
+)
+export default LearnWordCard

@@ -29,7 +29,6 @@ export function postData<R extends Record<string, any>>(url: string, data = {}):
         }
       })
       .catch((err: Error) => {
-        console.log('err', err)
         reject(err)
       })
   })
@@ -59,7 +58,6 @@ export function getData(url = '') {
         }
       })
       .catch((err) => {
-        console.log('err', err)
         reject(err)
       })
   })

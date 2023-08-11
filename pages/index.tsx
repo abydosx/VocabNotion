@@ -132,11 +132,6 @@ const Learn = forwardRef<
             </BoxButton>
           </div>
         </div>
-        {/* {showModal && (
-          <Modal>
-            <NotionText richText={formatContent(allVocabularies[currentIndex]).richTextEn} />
-          </Modal>
-        )} */}
         <Modal
           open={open}
           onClose={handleClose}
